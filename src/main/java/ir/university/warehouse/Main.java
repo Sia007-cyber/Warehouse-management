@@ -2,6 +2,7 @@ package ir.university.warehouse;
 
 import ir.university.warehouse.dao.*;
 import ir.university.warehouse.db.DatabaseConnection;
+import ir.university.warehouse.dto.*;
 import ir.university.warehouse.exception.WarehouseException;
 import ir.university.warehouse.model.*;
 import ir.university.warehouse.service.*;
@@ -28,31 +29,42 @@ public class Main {
         PermissionService permissionService = new PermissionServiceImpl(
                 permissionDAO, inventoryDAO, warehouseDAO, itemDAO,
                 allowedCategoriesDAO, inventoryService, accountingService);
+        ReportService reportService = new ReportServiceImpl(
+                warehouseDAO, itemDAO, permissionDAO, transactionDAO, inventoryService);
 
         try {
-            // قدم ۱: ساخت انبار
-            Warehouse warehouse = new Warehouse();
-            warehouse.setName("Central Warehouse - Test");
-            warehouse.setAddress("Tehran");
-            warehouse.setCapacity(500);
-            warehouse = warehouseDAO.insert(warehouse);
-            System.out.println("1) انبار ساخته شد: " + warehouse);
+            // قدم ۱: پیدا کردن یا ساختن انبار
+            Warehouse warehouse = findWarehouseByName(warehouseDAO, "Central Warehouse - Test");
+            if (warehouse == null) {
+                warehouse = new Warehouse();
+                warehouse.setName("Central Warehouse - Test");
+                warehouse.setAddress("Tehran");
+                warehouse.setCapacity(500);
+                warehouse = warehouseDAO.insert(warehouse);
+            }
+            System.out.println("1) انبار: " + warehouse);
 
-            // قدم ۲: ساخت دسته‌بندی و مجاز کردنش برای انبار
-            Category category = new Category();
-            category.setName("لبنیات - تست");
-            category = categoryDAO.insert(category);
+            // قدم ۲: پیدا کردن یا ساختن دسته‌بندی
+            Category category = findCategoryByName(categoryDAO, "لبنیات - تست");
+            if (category == null) {
+                category = new Category();
+                category.setName("لبنیات - تست");
+                category = categoryDAO.insert(category);
+            }
             allowedCategoriesDAO.allow(warehouse.getWarehouseId(), category.getCategoryId());
-            System.out.println("2) دسته‌بندی ساخته و مجاز شد: " + category);
+            System.out.println("2) دسته‌بندی: " + category);
 
-            // قدم ۳: ساخت کالا
-            Item item = new Item();
-            item.setItemCode("MILK-001");
-            item.setName("شیر پرچرب");
-            item.setDescription("شیر پرچرب ۱ لیتری");
-            item.setCategoryId(category.getCategoryId());
-            item = itemDAO.insert(item);
-            System.out.println("3) کالا ساخته شد: " + item);
+            // قدم ۳: پیدا کردن یا ساختن کالا (item_code یکتاست)
+            Item item = itemDAO.findByCode("MILK-001").orElse(null);
+            if (item == null) {
+                item = new Item();
+                item.setItemCode("MILK-001");
+                item.setName("شیر پرچرب");
+                item.setDescription("شیر پرچرب ۱ لیتری");
+                item.setCategoryId(category.getCategoryId());
+                item = itemDAO.insert(item);
+            }
+            System.out.println("3) کالا: " + item);
 
             // قدم ۴: شارژ حساب نقدی
             accountingService.deposit(10_000_000);
@@ -95,6 +107,20 @@ public class Main {
                 System.out.println("    خطای مورد انتظار دریافت شد: " + e.getMessage());
             }
 
+            // قدم ۸: تست ReportService
+            System.out.println("\n8a) گزارش وضعیت موجودی:");
+            for (InventoryStatusDTO status : reportService.getInventoryStatusByWarehouse(warehouse.getWarehouseId())) {
+                System.out.println("    " + status);
+            }
+
+            System.out.println("\n8b) گزارش فروش ماهانه (۲۰۲۶/۷):");
+            MonthlySalesReportDTO salesReport = reportService.getMonthlySalesReport(warehouse.getWarehouseId(), 2026, 7);
+            System.out.println(salesReport);
+
+            System.out.println("\n8c) گزارش مجوزها:");
+            PermissionsReportDTO permissionsReport = reportService.getPermissionsReport();
+            System.out.println("    " + permissionsReport);
+
         } catch (SQLException e) {
             System.err.println("Database error: " + e.getMessage());
             e.printStackTrace();
@@ -104,5 +130,23 @@ public class Main {
         } finally {
             DatabaseConnection.closeConnection();
         }
+    }
+
+    private static Warehouse findWarehouseByName(WarehouseDAO dao, String name) throws SQLException {
+        for (Warehouse w : dao.findAll()) {
+            if (w.getName().equals(name)) {
+                return w;
+            }
+        }
+        return null;
+    }
+
+    private static Category findCategoryByName(CategoryDAO dao, String name) throws SQLException {
+        for (Category c : dao.findAll()) {
+            if (c.getName().equals(name)) {
+                return c;
+            }
+        }
+        return null;
     }
 }
