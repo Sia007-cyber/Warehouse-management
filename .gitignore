@@ -1,0 +1,24 @@
+cat > .gitignore << 'EOF'
+# Maven
+target/
+
+# Compiled class files
+*.class
+
+# Database
+*.db
+*.sqlite
+
+# IDE - VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# KDE/File manager
+.directory
+EOF
