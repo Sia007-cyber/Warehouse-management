@@ -21,4 +21,19 @@ public interface WarehouseService {
             throws SQLException, ValidationException, EntityNotFoundException;
 
     void deleteWarehouse(int warehouseId) throws SQLException, EntityNotFoundException;
+
+    /**
+     * افزودن یک دسته‌بندی به لیست دسته‌های مجاز یک انبار.
+     */
+    void allowCategory(int warehouseId, int categoryId) throws SQLException, EntityNotFoundException;
+
+    /**
+     * حذف یک دسته‌بندی از لیست دسته‌های مجاز یک انبار.
+     */
+    void disallowCategory(int warehouseId, int categoryId) throws SQLException;
+
+    /**
+     * لیست شناسه‌ی دسته‌بندی‌های مجاز برای یک انبار.
+     */
+    List<Integer> getAllowedCategoryIds(int warehouseId) throws SQLException;
 }

@@ -1,5 +1,7 @@
 package ir.university.warehouse.service;
 
+import ir.university.warehouse.dao.CategoryDAO;
+import ir.university.warehouse.dao.WarehouseAllowedCategoriesDAO;
 import ir.university.warehouse.dao.WarehouseDAO;
 import ir.university.warehouse.exception.EntityNotFoundException;
 import ir.university.warehouse.exception.ValidationException;
@@ -11,9 +13,15 @@ import java.util.List;
 public class WarehouseServiceImpl implements WarehouseService {
 
     private final WarehouseDAO warehouseDAO;
+    private final WarehouseAllowedCategoriesDAO allowedCategoriesDAO;
+    private final CategoryDAO categoryDAO;
 
-    public WarehouseServiceImpl(WarehouseDAO warehouseDAO) {
+    public WarehouseServiceImpl(WarehouseDAO warehouseDAO,
+                                 WarehouseAllowedCategoriesDAO allowedCategoriesDAO,
+                                 CategoryDAO categoryDAO) {
         this.warehouseDAO = warehouseDAO;
+        this.allowedCategoriesDAO = allowedCategoriesDAO;
+        this.categoryDAO = categoryDAO;
     }
 
     @Override
@@ -56,6 +64,25 @@ public class WarehouseServiceImpl implements WarehouseService {
     public void deleteWarehouse(int warehouseId) throws SQLException, EntityNotFoundException {
         getWarehouseById(warehouseId); // اطمینان از وجود قبل از حذف
         warehouseDAO.delete(warehouseId);
+    }
+
+    @Override
+    public void allowCategory(int warehouseId, int categoryId) throws SQLException, EntityNotFoundException {
+        getWarehouseById(warehouseId); // اطمینان از وجود انبار
+        if (categoryDAO.findById(categoryId).isEmpty()) {
+            throw new EntityNotFoundException("دسته‌بندی با شناسه " + categoryId + " یافت نشد.");
+        }
+        allowedCategoriesDAO.allow(warehouseId, categoryId);
+    }
+
+    @Override
+    public void disallowCategory(int warehouseId, int categoryId) throws SQLException {
+        allowedCategoriesDAO.disallow(warehouseId, categoryId);
+    }
+
+    @Override
+    public List<Integer> getAllowedCategoryIds(int warehouseId) throws SQLException {
+        return allowedCategoriesDAO.findAllowedCategoryIds(warehouseId);
     }
 
     private void validate(String name, int capacity) throws ValidationException {

@@ -10,10 +10,14 @@ CREATE TABLE Warehouses (
     capacity INTEGER NOT NULL CHECK (capacity > 0)
 );
 
--- جدول دسته‌بندی‌ها (ساده، بدون سلسله‌مراتب)
+-- جدول دسته‌بندی‌ها
+-- توجه: parent_id برای پشتیبانی احتمالی از دسته‌بندی سلسله‌مراتبی در نظر گرفته شده،
+-- اما در داده‌های نمونه‌ی این پروژه دسته‌ها تخت هستند و parent_id همیشه NULL است.
 CREATE TABLE Categories (
     category_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE
+    name TEXT NOT NULL UNIQUE,
+    parent_id INTEGER,
+    FOREIGN KEY (parent_id) REFERENCES Categories(category_id)
 );
 
 -- دسته‌بندی‌های مجاز برای هر انبار (رابطه چند‌به‌چند)

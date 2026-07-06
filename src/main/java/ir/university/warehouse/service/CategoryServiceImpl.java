@@ -18,11 +18,26 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public Category createCategory(String name) throws SQLException, ValidationException {
+        try {
+            return createCategory(name, null);
+        } catch (EntityNotFoundException e) {
+            // never happens with parentId == null
+            throw new IllegalStateException(e);
+        }
+    }
+
+    @Override
+    public Category createCategory(String name, Integer parentId)
+            throws SQLException, ValidationException, EntityNotFoundException {
         validateName(name);
         checkNameNotDuplicate(name, null);
+        if (parentId != null) {
+            getCategoryById(parentId); // اطمینان از وجود دسته‌ی والد
+        }
 
         Category category = new Category();
         category.setName(name.trim());
+        category.setParentId(parentId);
         return categoryDAO.insert(category);
     }
 
@@ -40,11 +55,25 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public Category updateCategory(int categoryId, String name)
             throws SQLException, ValidationException, EntityNotFoundException {
+        Category existing = getCategoryById(categoryId);
+        return updateCategory(categoryId, name, existing.getParentId());
+    }
+
+    @Override
+    public Category updateCategory(int categoryId, String name, Integer parentId)
+            throws SQLException, ValidationException, EntityNotFoundException {
         validateName(name);
         checkNameNotDuplicate(name, categoryId);
+        if (parentId != null) {
+            if (parentId == categoryId) {
+                throw new ValidationException("یک دسته‌بندی نمی‌تواند والد خودش باشد.");
+            }
+            getCategoryById(parentId); // اطمینان از وجود دسته‌ی والد
+        }
 
         Category existing = getCategoryById(categoryId);
         existing.setName(name.trim());
+        existing.setParentId(parentId);
         categoryDAO.update(existing);
         return existing;
     }

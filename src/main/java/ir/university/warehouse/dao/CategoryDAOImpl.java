@@ -11,11 +11,16 @@ public class CategoryDAOImpl implements CategoryDAO {
 
     @Override
     public Category insert(Category category) throws SQLException {
-        String sql = "INSERT INTO Categories (name) VALUES (?)";
+        String sql = "INSERT INTO Categories (name, parent_id) VALUES (?, ?)";
         Connection conn = DatabaseConnection.getConnection();
 
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, category.getName());
+            if (category.getParentId() == null) {
+                stmt.setNull(2, Types.INTEGER);
+            } else {
+                stmt.setInt(2, category.getParentId());
+            }
             stmt.executeUpdate();
 
             try (ResultSet keys = stmt.getGeneratedKeys()) {
@@ -60,12 +65,17 @@ public class CategoryDAOImpl implements CategoryDAO {
 
     @Override
     public void update(Category category) throws SQLException {
-        String sql = "UPDATE Categories SET name = ? WHERE category_id = ?";
+        String sql = "UPDATE Categories SET name = ?, parent_id = ? WHERE category_id = ?";
         Connection conn = DatabaseConnection.getConnection();
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, category.getName());
-            stmt.setInt(2, category.getCategoryId());
+            if (category.getParentId() == null) {
+                stmt.setNull(2, Types.INTEGER);
+            } else {
+                stmt.setInt(2, category.getParentId());
+            }
+            stmt.setInt(3, category.getCategoryId());
             stmt.executeUpdate();
         }
     }
@@ -85,6 +95,8 @@ public class CategoryDAOImpl implements CategoryDAO {
         Category category = new Category();
         category.setCategoryId(rs.getInt("category_id"));
         category.setName(rs.getString("name"));
+        int parentId = rs.getInt("parent_id");
+        category.setParentId(rs.wasNull() ? null : parentId);
         return category;
     }
 }
