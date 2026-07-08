@@ -38,8 +38,8 @@ public class WarehouseApp extends Application {
     }
 
     private HBox buildToolbar() {
-        Button faBtn = new Button(I18n.t("lang.fa"));
-        Button enBtn = new Button(I18n.t("lang.en"));
+        Button faBtn = new Button("فارسی");
+        Button enBtn = new Button("English");
         faBtn.setOnAction(e -> switchLanguage(I18n.Lang.FA));
         enBtn.setOnAction(e -> switchLanguage(I18n.Lang.EN));
 

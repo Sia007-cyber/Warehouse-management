@@ -13,7 +13,7 @@ public final class I18n {
 
     public enum Lang { FA, EN }
 
-    private static Lang current = Lang.FA;
+    private static Lang current = Lang.EN;
 
     private static final Map<String, String[]> MAP = new HashMap<>();
     // ترتیب مقادیر آرایه: [0]=فارسی, [1]=انگلیسی
