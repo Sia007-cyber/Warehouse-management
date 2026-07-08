@@ -1,97 +1,155 @@
-# Multi-Warehouse Management System
+# Warehouse Management System
 
-This project is a **Multi-Warehouse Management System** focused on accurate inventory tracking and inventory state management. The system supports recording incoming and outgoing goods, managing warehouse permits, handling financial operations, and providing real-time inventory information.
+> A Java desktop application for managing multiple warehouses using **JavaFX**, **JDBC**, and **SQLite**, following a **Layered Architecture (Model → DAO → Service → GUI)**.
 
-## System Capabilities
-
-The system should be able to answer the following questions:
-
-* What is the current physical inventory of each product in each warehouse?
-* How many units of each product are currently on the way to warehouses?
-* How many units of each product are reserved for outgoing shipments?
-* Is it possible to issue a new incoming or outgoing permit for a specific warehouse and product?
+![Architecture](docs/architecture.png)
 
 ---
 
-# Core Concept: Incoming and Outgoing Permits
+## Overview
 
-Every inventory movement must be authorized through a permit.
+Warehouse Management System is a desktop application designed to manage inventory across multiple warehouses while enforcing real-world business rules.
 
-There are two types of permits:
+Instead of directly modifying inventory, every movement of goods is handled through **Incoming** and **Outgoing Permits**, ensuring that inventory remains consistent and traceable throughout the entire workflow.
 
-### Incoming Permit (Purchase / Receiving)
-
-Example: Purchasing 100 pencils.
-
-An incoming permit is issued. When the goods arrive, the warehouse manager confirms the delivery, and the physical inventory is increased.
-
-### Outgoing Permit (Sale / Shipment)
-
-Example: Selling 50 pencils.
-
-An outgoing permit is issued, and the requested quantity is reserved immediately. Until the warehouse manager confirms the shipment, the physical inventory does not decrease, but the reserved items cannot be sold again.
-
-All permits are initially created with the **Issued** status and change to **Done** after confirmation.
+The project was developed as a university software engineering project with a strong focus on clean architecture, business logic, and maintainability.
 
 ---
 
-# Key Terms
+## Features
 
-| Term               | Description                                                  |
-| ------------------ | ------------------------------------------------------------ |
-| Physical Inventory | Products that are physically available in the warehouse      |
-| Reserved Stock     | Products allocated to outgoing permits but not yet shipped   |
-| Incoming Stock     | Purchased products that have not yet arrived                 |
-| Warehouse Capacity | Maximum number of product units that the warehouse can store |
+* Multi-warehouse management
+* Product & hierarchical category management (`parent_id`)
+* Incoming and outgoing permit management
+* Inventory reservation system
+* Warehouse capacity validation
+* Accounting validation (cash & inventory)
+* Monthly reporting
+* Real-time inventory tracking
+* SQLite database with JDBC
+* JavaFX desktop interface
 
 ---
 
-# Business Rules
+## Architecture
 
-### Available Stock for Shipment
+The application follows a layered architecture to separate responsibilities.
 
+```text
+┌──────────────────────────────┐
+│ GUI Layer (JavaFX)           │
+│ Tabs & User Interface        │
+└──────────────┬───────────────┘
+               │
+┌──────────────▼───────────────┐
+│ Service Layer                │
+│ Business Rules & Validation  │
+└──────────────┬───────────────┘
+               │
+┌──────────────▼───────────────┐
+│ DAO Layer                    │
+│ JDBC Data Access             │
+└──────────────┬───────────────┘
+               │
+┌──────────────▼───────────────┐
+│ SQLite Database              │
+└──────────────────────────────┘
 ```
-Available Stock = Physical Inventory − Total Issued Outgoing Permits
+
+---
+
+## Business Workflow
+
+Every inventory movement follows the same process.
+
+```text
+Create Incoming / Outgoing Permit
+                │
+                ▼
+      Business Validation
+      • Warehouse Capacity
+      • Allowed Category
+      • Cash Availability
+      • Inventory Availability
+                │
+                ▼
+        Status = ISSUED
+                │
+                ▼
+ Warehouse Manager Confirmation
+                │
+                ▼
+         Status = DONE
+                │
+                ▼
+ Inventory & Accounting Updated
+```
+
+---
+
+## Business Rules
+
+### Available Stock
+
+```text
+Available Stock =
+Physical Inventory − Issued Outgoing Quantity
 ```
 
 ### Incoming Stock
 
-```
-Incoming Stock = Total Issued Incoming Permits
+```text
+Incoming Stock =
+Issued Incoming Quantity
 ```
 
 ### Capacity Validation
 
+```text
+Physical Inventory
++ Incoming Stock
++ New Quantity
+≤ Warehouse Capacity
 ```
-Physical Inventory + Incoming Stock + New Quantity ≤ Warehouse Capacity
-```
-
-> **Note:** Product transfers between warehouses are **not supported** in this project. Goods can only enter the system from external suppliers and leave through sales or shipments.
 
 ---
 
-# Project Modules
+## Project Modules
 
-## 1. Warehouse Management
-
-Manages multiple warehouses with different characteristics.
+### Warehouse Management
 
 Each warehouse contains:
 
-* Unique ID
+* ID
 * Name
 * Address
 * Capacity
-* List of allowed product categories
+* Allowed Product Categories
 
 ---
 
-## 2. Permit Management (Core Module)
+### Product & Category Management
+
+Products belong to exactly one category.
+
+The system supports **hierarchical categories** using the `parent_id` field.
+
+Example:
+
+```text
+Food
+├── Dairy
+├── Beverages
+└── Snacks
+```
+
+---
+
+### Permit Management
 
 Each permit contains:
 
-* Unique ID
-* Type (Incoming / Outgoing)
+* Incoming / Outgoing Type
 * Warehouse
 * Product
 * Quantity
@@ -100,41 +158,94 @@ Each permit contains:
 * Date
 * Status
 
----
+Permit Status:
 
-## 3. Product & Category Management
-
-Each product belongs to exactly one category.
-
-Example categories include:
-
-* Dairy Products
-* Fruits & Vegetables
-* Dry Food
-* Beverages
-* Cleaning Products
-* Snacks
-* Personal Care Products
-* Grains & Legumes
+```text
+ISSUED
+   │
+   ▼
+ DONE
+```
 
 ---
 
-## 4. Accounting & Sales
+### Accounting
 
-Handles purchasing and selling operations while validating:
+The accounting module validates:
 
-* Available cash
+* Cash availability
 * Warehouse capacity
-* Inventory availability
+* Product inventory
 
-The module issues the required permits after successful validation.
+If validation succeeds, the corresponding permit is created automatically.
 
 ---
 
-## 5. Reporting
+### Reporting
 
-The system provides the following reports:
+The application provides reports for:
 
-* Real-time inventory status (Physical, Incoming, Reserved, Available)
-* Monthly sales report for each warehouse, including sold items and total revenue
-* Pending and completed permit reports
+* Physical Inventory
+* Reserved Inventory
+* Incoming Inventory
+* Available Inventory
+* Monthly Sales
+* Revenue
+* Pending Permits
+* Completed Permits
+
+---
+
+## Technology Stack
+
+* Java
+* JavaFX
+* JDBC
+* SQLite
+* Maven
+* Object-Oriented Programming
+* Layered Architecture (Model / DAO / Service / GUI)
+
+---
+
+## Project Structure
+
+```text
+src
+├── model
+├── dao
+├── service
+├── gui
+├── db
+└── util
+```
+
+---
+
+## Design Goals
+
+The project emphasizes:
+
+* Separation of Concerns
+* Clean Layered Architecture
+* Business Rule Validation
+* Maintainability
+* Scalability
+* Readable Object-Oriented Design
+
+---
+
+## Future Improvements
+
+* Product transfer between warehouses
+* User authentication & authorization
+* Dashboard with charts
+* Export reports (PDF / Excel)
+* REST API
+* PostgreSQL support
+
+---
+
+## License
+
+This project was developed for educational purposes as part of a university course.
