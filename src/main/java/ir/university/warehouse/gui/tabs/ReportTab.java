@@ -18,12 +18,14 @@ import javafx.scene.layout.VBox;
 import java.sql.SQLException;
 import java.time.LocalDate;
 
+import static ir.university.warehouse.gui.I18n.t;
+
 public class ReportTab extends Tab {
 
     private final AppContext ctx;
 
     public ReportTab(AppContext ctx) {
-        super("گزارش‌ها");
+        super(t("tab.reports"));
         this.ctx = ctx;
         setClosable(false);
 
@@ -34,29 +36,29 @@ public class ReportTab extends Tab {
 
     // --- گزارش وضعیت موجودی ---
     private Tab buildInventoryStatusTab() {
-        Tab tab = new Tab("وضعیت موجودی");
+        Tab tab = new Tab(t("report.inventory.tab"));
         tab.setClosable(false);
 
         TableView<InventoryStatusDTO> table = new TableView<>();
         ObservableList<InventoryStatusDTO> data = FXCollections.observableArrayList();
 
-        TableColumn<InventoryStatusDTO, String> warehouseCol = new TableColumn<>("انبار");
+        TableColumn<InventoryStatusDTO, String> warehouseCol = new TableColumn<>(t("report.column.warehouse"));
         warehouseCol.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getWarehouseName()));
-        TableColumn<InventoryStatusDTO, String> itemCol = new TableColumn<>("کالا");
+        TableColumn<InventoryStatusDTO, String> itemCol = new TableColumn<>(t("report.column.item"));
         itemCol.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getItemName()));
-        TableColumn<InventoryStatusDTO, Number> realCol = new TableColumn<>("موجودی واقعی");
+        TableColumn<InventoryStatusDTO, Number> realCol = new TableColumn<>(t("inventory.column.real"));
         realCol.setCellValueFactory(c -> new javafx.beans.property.SimpleIntegerProperty(c.getValue().getRealStock()));
-        TableColumn<InventoryStatusDTO, Number> availableCol = new TableColumn<>("قابل خروج");
+        TableColumn<InventoryStatusDTO, Number> availableCol = new TableColumn<>(t("inventory.column.available"));
         availableCol.setCellValueFactory(c -> new javafx.beans.property.SimpleIntegerProperty(c.getValue().getAvailableForExit()));
         table.getColumns().setAll(warehouseCol, itemCol, realCol, availableCol);
         table.setItems(data);
 
-        Button refreshBtn = new Button("بازخوانی گزارش");
+        Button refreshBtn = new Button(t("button.refresh"));
         refreshBtn.setOnAction(e -> {
             try {
                 data.setAll(ctx.reportService.getInventoryStatus());
             } catch (SQLException ex) {
-                Dialogs.error("خطا: " + ex.getMessage());
+                Dialogs.error(t("report.error") + ex.getMessage());
             }
         });
 
@@ -71,7 +73,7 @@ public class ReportTab extends Tab {
 
     // --- گزارش فروش ماهانه ---
     private Tab buildMonthlySalesTab() {
-        Tab tab = new Tab("فروش ماهانه");
+        Tab tab = new Tab(t("report.sales.tab"));
         tab.setClosable(false);
 
         ComboBox<Warehouse> warehouseCombo = new ComboBox<>();
@@ -86,11 +88,11 @@ public class ReportTab extends Tab {
 
         TableView<SalesLineItemDTO> table = new TableView<>();
         ObservableList<SalesLineItemDTO> data = FXCollections.observableArrayList();
-        TableColumn<SalesLineItemDTO, String> itemCol = new TableColumn<>("کالا");
+        TableColumn<SalesLineItemDTO, String> itemCol = new TableColumn<>(t("report.column.item"));
         itemCol.setCellValueFactory(new PropertyValueFactory<>("itemName"));
-        TableColumn<SalesLineItemDTO, Number> qtyCol = new TableColumn<>("تعداد فروخته‌شده");
+        TableColumn<SalesLineItemDTO, Number> qtyCol = new TableColumn<>(t("report.column.qtysold"));
         qtyCol.setCellValueFactory(c -> new javafx.beans.property.SimpleIntegerProperty(c.getValue().getQuantitySold()));
-        TableColumn<SalesLineItemDTO, Number> totalCol = new TableColumn<>("مبلغ کل");
+        TableColumn<SalesLineItemDTO, Number> totalCol = new TableColumn<>(t("report.column.total"));
         totalCol.setCellValueFactory(c -> new javafx.beans.property.SimpleDoubleProperty(c.getValue().getTotalAmount()));
         table.getColumns().setAll(itemCol, qtyCol, totalCol);
         table.setItems(data);
@@ -98,24 +100,24 @@ public class ReportTab extends Tab {
         Label grandTotalLabel = new Label();
         grandTotalLabel.setStyle("-fx-font-weight: bold;");
 
-        Button generateBtn = new Button("ساخت گزارش");
+        Button generateBtn = new Button(t("report.button.generate"));
         generateBtn.setOnAction(e -> {
             Warehouse w = warehouseCombo.getSelectionModel().getSelectedItem();
             if (w == null) {
-                Dialogs.error("ابتدا یک انبار را انتخاب کنید.");
+                Dialogs.error(t("report.select.warehouse.first"));
                 return;
             }
             try {
                 var report = ctx.reportService.getMonthlySalesReport(w.getWarehouseId(), yearSpinner.getValue(), monthSpinner.getValue());
                 data.setAll(report.getLineItems());
-                grandTotalLabel.setText("جمع کل فروش: " + report.getGrandTotal());
+                grandTotalLabel.setText(t("report.grandtotal.label") + report.getGrandTotal());
             } catch (SQLException ex) {
-                Dialogs.error("خطا: " + ex.getMessage());
+                Dialogs.error(t("report.error") + ex.getMessage());
             }
         });
 
-        HBox controls = new HBox(8, new Label("انبار:"), warehouseCombo,
-                new Label("سال:"), yearSpinner, new Label("ماه:"), monthSpinner, generateBtn);
+        HBox controls = new HBox(8, new Label(t("report.field.warehouse")), warehouseCombo,
+                new Label(t("report.field.year")), yearSpinner, new Label(t("report.field.month")), monthSpinner, generateBtn);
         controls.setPadding(new Insets(0, 0, 10, 0));
 
         VBox root = new VBox(10, controls, table, grandTotalLabel);
@@ -126,7 +128,7 @@ public class ReportTab extends Tab {
                 try {
                     warehouseCombo.setItems(FXCollections.observableArrayList(ctx.warehouseService.getAllWarehouses()));
                 } catch (SQLException ex) {
-                    Dialogs.error("خطا در بارگذاری انبارها: " + ex.getMessage());
+                    Dialogs.error(t("report.warehouses.error") + ex.getMessage());
                 }
             }
         });
@@ -137,7 +139,7 @@ public class ReportTab extends Tab {
 
     // --- گزارش مجوزها ---
     private Tab buildPermissionsReportTab() {
-        Tab tab = new Tab("گزارش مجوزها");
+        Tab tab = new Tab(t("report.permissions.tab"));
         tab.setClosable(false);
 
         TableView<Permission> pendingTable = new TableView<>();
@@ -150,35 +152,35 @@ public class ReportTab extends Tab {
         pendingTable.setItems(pendingData);
         completedTable.setItems(completedData);
 
-        Button refreshBtn = new Button("بازخوانی گزارش");
+        Button refreshBtn = new Button(t("button.refresh"));
         refreshBtn.setOnAction(e -> {
             try {
                 var report = ctx.reportService.getPermissionsReport();
                 pendingData.setAll(report.getPending());
                 completedData.setAll(report.getCompleted());
             } catch (SQLException ex) {
-                Dialogs.error("خطا: " + ex.getMessage());
+                Dialogs.error(t("report.error") + ex.getMessage());
             }
         });
 
         VBox root = new VBox(10, refreshBtn,
-                new Label("مجوزهای در انتظار (ISSUED):"), pendingTable,
-                new Label("مجوزهای انجام‌شده (DONE):"), completedTable);
+                new Label(t("report.pending.label")), pendingTable,
+                new Label(t("report.completed.label")), completedTable);
         root.setPadding(new Insets(10));
         tab.setContent(root);
         return tab;
     }
 
     private void setupPermissionColumns(TableView<Permission> table) {
-        TableColumn<Permission, Number> idCol = new TableColumn<>("شناسه");
+        TableColumn<Permission, Number> idCol = new TableColumn<>(t("column.id"));
         idCol.setCellValueFactory(c -> new javafx.beans.property.SimpleIntegerProperty(c.getValue().getPermissionId()));
-        TableColumn<Permission, String> typeCol = new TableColumn<>("نوع");
+        TableColumn<Permission, String> typeCol = new TableColumn<>(t("permission.column.type"));
         typeCol.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getType().toString()));
-        TableColumn<Permission, String> titleCol = new TableColumn<>("عنوان");
+        TableColumn<Permission, String> titleCol = new TableColumn<>(t("permission.column.title"));
         titleCol.setCellValueFactory(new PropertyValueFactory<>("title"));
-        TableColumn<Permission, Number> qtyCol = new TableColumn<>("تعداد");
+        TableColumn<Permission, Number> qtyCol = new TableColumn<>(t("permission.column.quantity"));
         qtyCol.setCellValueFactory(c -> new javafx.beans.property.SimpleIntegerProperty(c.getValue().getQuantity()));
-        TableColumn<Permission, String> dateCol = new TableColumn<>("تاریخ");
+        TableColumn<Permission, String> dateCol = new TableColumn<>(t("permission.column.date"));
         dateCol.setCellValueFactory(new PropertyValueFactory<>("permissionDate"));
         table.getColumns().setAll(idCol, typeCol, titleCol, qtyCol, dateCol);
         table.setPrefHeight(180);

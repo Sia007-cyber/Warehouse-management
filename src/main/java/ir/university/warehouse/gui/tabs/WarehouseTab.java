@@ -2,6 +2,7 @@ package ir.university.warehouse.gui.tabs;
 
 import ir.university.warehouse.gui.AppContext;
 import ir.university.warehouse.gui.Dialogs;
+import ir.university.warehouse.gui.I18n;
 import ir.university.warehouse.model.Category;
 import ir.university.warehouse.model.Warehouse;
 import javafx.collections.FXCollections;
@@ -14,6 +15,8 @@ import javafx.scene.layout.*;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
+
+import static ir.university.warehouse.gui.I18n.t;
 
 public class WarehouseTab extends Tab {
 
@@ -30,7 +33,7 @@ public class WarehouseTab extends Tab {
     private Warehouse selectedWarehouse;
 
     public WarehouseTab(AppContext ctx) {
-        super("انبارها");
+        super(t("tab.warehouses"));
         this.ctx = ctx;
         setClosable(false);
         setContent(buildContent());
@@ -49,16 +52,16 @@ public class WarehouseTab extends Tab {
     }
 
     private void buildTable() {
-        TableColumn<Warehouse, Number> idCol = new TableColumn<>("شناسه");
+        TableColumn<Warehouse, Number> idCol = new TableColumn<>(t("column.id"));
         idCol.setCellValueFactory(c -> new javafx.beans.property.SimpleIntegerProperty(c.getValue().getWarehouseId()));
 
-        TableColumn<Warehouse, String> nameCol = new TableColumn<>("نام");
+        TableColumn<Warehouse, String> nameCol = new TableColumn<>(t("column.name"));
         nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
 
-        TableColumn<Warehouse, String> addressCol = new TableColumn<>("آدرس");
+        TableColumn<Warehouse, String> addressCol = new TableColumn<>(t("warehouse.column.address"));
         addressCol.setCellValueFactory(new PropertyValueFactory<>("address"));
 
-        TableColumn<Warehouse, Number> capacityCol = new TableColumn<>("ظرفیت");
+        TableColumn<Warehouse, Number> capacityCol = new TableColumn<>(t("warehouse.column.capacity"));
         capacityCol.setCellValueFactory(c -> new javafx.beans.property.SimpleIntegerProperty(c.getValue().getCapacity()));
 
         table.getColumns().setAll(idCol, nameCol, addressCol, capacityCol);
@@ -75,17 +78,17 @@ public class WarehouseTab extends Tab {
         GridPane form = new GridPane();
         form.setHgap(6);
         form.setVgap(6);
-        form.add(new Label("نام:"), 0, 0);
+        form.add(new Label(t("warehouse.field.name")), 0, 0);
         form.add(nameField, 1, 0);
-        form.add(new Label("آدرس:"), 0, 1);
+        form.add(new Label(t("warehouse.field.address")), 0, 1);
         form.add(addressField, 1, 1);
-        form.add(new Label("ظرفیت:"), 0, 2);
+        form.add(new Label(t("warehouse.field.capacity")), 0, 2);
         form.add(capacityField, 1, 2);
 
-        Button addBtn = new Button("افزودن");
-        Button updateBtn = new Button("ویرایش");
-        Button deleteBtn = new Button("حذف");
-        Button clearBtn = new Button("پاک کردن فرم");
+        Button addBtn = new Button(t("button.add"));
+        Button updateBtn = new Button(t("button.update"));
+        Button deleteBtn = new Button(t("button.delete"));
+        Button clearBtn = new Button(t("button.clear"));
         addBtn.setOnAction(e -> onAdd());
         updateBtn.setOnAction(e -> onUpdate());
         deleteBtn.setOnAction(e -> onDelete());
@@ -93,14 +96,14 @@ public class WarehouseTab extends Tab {
 
         HBox buttons = new HBox(6, addBtn, updateBtn, deleteBtn, clearBtn);
 
-        Label categoryLabel = new Label("دسته‌بندی‌های مجاز این انبار:");
+        Label categoryLabel = new Label(t("warehouse.categories.label"));
         categoryList.setCellFactory(view -> new CheckBoxListCell());
         categoryList.setPrefHeight(220);
 
-        Button saveCategoriesBtn = new Button("ذخیره دسته‌های مجاز");
+        Button saveCategoriesBtn = new Button(t("warehouse.categories.save"));
         saveCategoriesBtn.setOnAction(e -> onSaveAllowedCategories());
 
-        box.getChildren().addAll(new Label("مشخصات انبار"), form, buttons,
+        box.getChildren().addAll(new Label(t("warehouse.form.title")), form, buttons,
                 new Separator(), categoryLabel, categoryList, saveCategoriesBtn);
         return box;
     }
@@ -137,7 +140,7 @@ public class WarehouseTab extends Tab {
             categoryList.setItems(FXCollections.observableArrayList(ctx.categoryService.getAllCategories()));
             loadAllowedCategoriesForSelected();
         } catch (SQLException e) {
-            Dialogs.error("خطا در بارگذاری دسته‌بندی‌ها: " + e.getMessage());
+            Dialogs.error(t("warehouse.categories.load.error") + e.getMessage());
         }
     }
 
@@ -147,7 +150,7 @@ public class WarehouseTab extends Tab {
             try {
                 checkedCategoryIds.addAll(ctx.warehouseService.getAllowedCategoryIds(selectedWarehouse.getWarehouseId()));
             } catch (SQLException e) {
-                Dialogs.error("خطا در بارگذاری دسته‌های مجاز: " + e.getMessage());
+                Dialogs.error(t("warehouse.allowed.load.error") + e.getMessage());
             }
         }
         categoryList.refresh();
@@ -178,7 +181,7 @@ public class WarehouseTab extends Tab {
 
     private void onUpdate() {
         if (selectedWarehouse == null) {
-            Dialogs.error("ابتدا یک انبار را از جدول انتخاب کنید.");
+            Dialogs.error(t("warehouse.select.first"));
             return;
         }
         try {
@@ -195,22 +198,22 @@ public class WarehouseTab extends Tab {
 
     private void onDelete() {
         if (selectedWarehouse == null) {
-            Dialogs.error("ابتدا یک انبار را از جدول انتخاب کنید.");
+            Dialogs.error(t("warehouse.select.first"));
             return;
         }
-        if (!Dialogs.confirm("حذف انبار «" + selectedWarehouse.getName() + "» انجام شود؟")) return;
+        if (!Dialogs.confirm(t("warehouse.confirm.delete"))) return;
         try {
             ctx.warehouseService.deleteWarehouse(selectedWarehouse.getWarehouseId());
             data.remove(selectedWarehouse);
             clearForm();
         } catch (Exception e) {
-            Dialogs.error("حذف ناموفق بود (احتمالاً این انبار در مجوزها استفاده شده): " + e.getMessage());
+            Dialogs.error(t("warehouse.delete.failed") + e.getMessage());
         }
     }
 
     private void onSaveAllowedCategories() {
         if (selectedWarehouse == null) {
-            Dialogs.error("ابتدا یک انبار را از جدول انتخاب کنید.");
+            Dialogs.error(t("warehouse.select.first"));
             return;
         }
         try {
@@ -227,7 +230,7 @@ public class WarehouseTab extends Tab {
                     ctx.warehouseService.disallowCategory(selectedWarehouse.getWarehouseId(), id);
                 }
             }
-            Dialogs.info("دسته‌های مجاز به‌روزرسانی شد.");
+            Dialogs.info(t("warehouse.categories.updated"));
         } catch (Exception e) {
             Dialogs.error(e.getMessage());
         }
@@ -237,7 +240,7 @@ public class WarehouseTab extends Tab {
         try {
             return Integer.parseInt(capacityField.getText().trim());
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("ظرفیت باید یک عدد صحیح باشد.");
+            throw new IllegalArgumentException(t("warehouse.capacity.notint"));
         }
     }
 
@@ -254,7 +257,7 @@ public class WarehouseTab extends Tab {
         try {
             data.setAll(ctx.warehouseService.getAllWarehouses());
         } catch (SQLException e) {
-            Dialogs.error("خطا در بارگذاری انبارها: " + e.getMessage());
+            Dialogs.error(t("warehouse.load.error") + e.getMessage());
         }
     }
 }

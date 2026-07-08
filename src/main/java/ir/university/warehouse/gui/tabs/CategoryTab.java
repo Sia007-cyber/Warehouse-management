@@ -15,6 +15,8 @@ import javafx.scene.layout.VBox;
 
 import java.sql.SQLException;
 
+import static ir.university.warehouse.gui.I18n.t;
+
 public class CategoryTab extends Tab {
 
     private final AppContext ctx;
@@ -26,7 +28,7 @@ public class CategoryTab extends Tab {
     private Category selected;
 
     public CategoryTab(AppContext ctx) {
-        super("دسته‌بندی‌ها");
+        super(t("tab.categories"));
         this.ctx = ctx;
         setClosable(false);
         setContent(buildContent());
@@ -37,11 +39,11 @@ public class CategoryTab extends Tab {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(10));
 
-        TableColumn<Category, Number> idCol = new TableColumn<>("شناسه");
+        TableColumn<Category, Number> idCol = new TableColumn<>(t("column.id"));
         idCol.setCellValueFactory(c -> new javafx.beans.property.SimpleIntegerProperty(c.getValue().getCategoryId()));
-        TableColumn<Category, String> nameCol = new TableColumn<>("نام");
+        TableColumn<Category, String> nameCol = new TableColumn<>(t("column.name"));
         nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-        TableColumn<Category, String> parentCol = new TableColumn<>("والد");
+        TableColumn<Category, String> parentCol = new TableColumn<>(t("category.column.parent"));
         parentCol.setCellValueFactory(c -> {
             Integer pid = c.getValue().getParentId();
             String label = "-";
@@ -59,26 +61,26 @@ public class CategoryTab extends Tab {
         form.setHgap(6);
         form.setVgap(6);
         form.setPadding(new Insets(0, 0, 0, 12));
-        form.add(new Label("نام دسته‌بندی:"), 0, 0);
+        form.add(new Label(t("category.field.name")), 0, 0);
         form.add(nameField, 1, 0);
-        form.add(new Label("دسته‌ی والد (اختیاری):"), 0, 1);
+        form.add(new Label(t("category.field.parent")), 0, 1);
         parentCombo.setConverter(new javafx.util.StringConverter<>() {
-            @Override public String toString(Category c) { return c == null ? "(بدون والد)" : c.getName(); }
+            @Override public String toString(Category c) { return c == null ? t("category.parent.none") : c.getName(); }
             @Override public Category fromString(String s) { return null; }
         });
         form.add(parentCombo, 1, 1);
 
-        Button addBtn = new Button("افزودن");
-        Button updateBtn = new Button("ویرایش");
-        Button deleteBtn = new Button("حذف");
-        Button clearBtn = new Button("پاک کردن فرم");
+        Button addBtn = new Button(t("button.add"));
+        Button updateBtn = new Button(t("button.update"));
+        Button deleteBtn = new Button(t("button.delete"));
+        Button clearBtn = new Button(t("button.clear"));
         addBtn.setOnAction(e -> onAdd());
         updateBtn.setOnAction(e -> onUpdate());
         deleteBtn.setOnAction(e -> onDelete());
         clearBtn.setOnAction(e -> clearForm());
         HBox buttons = new HBox(6, addBtn, updateBtn, deleteBtn, clearBtn);
 
-        VBox side = new VBox(10, new Label("مشخصات دسته‌بندی"), form, buttons);
+        VBox side = new VBox(10, new Label(t("category.form.title")), form, buttons);
         side.setPrefWidth(320);
 
         root.setCenter(table);
@@ -115,7 +117,7 @@ public class CategoryTab extends Tab {
 
     private void onUpdate() {
         if (selected == null) {
-            Dialogs.error("ابتدا یک دسته‌بندی را از جدول انتخاب کنید.");
+            Dialogs.error(t("category.select.first"));
             return;
         }
         try {
@@ -133,17 +135,17 @@ public class CategoryTab extends Tab {
 
     private void onDelete() {
         if (selected == null) {
-            Dialogs.error("ابتدا یک دسته‌بندی را از جدول انتخاب کنید.");
+            Dialogs.error(t("category.select.first"));
             return;
         }
-        if (!Dialogs.confirm("حذف دسته‌بندی «" + selected.getName() + "» انجام شود؟")) return;
+        if (!Dialogs.confirm(t("category.confirm.delete"))) return;
         try {
             ctx.categoryService.deleteCategory(selected.getCategoryId());
             data.remove(selected);
             refreshParentCombo();
             clearForm();
         } catch (Exception e) {
-            Dialogs.error("حذف ناموفق بود (احتمالاً کالایی به این دسته وابسته است): " + e.getMessage());
+            Dialogs.error(t("category.delete.failed") + e.getMessage());
         }
     }
 
@@ -168,7 +170,7 @@ public class CategoryTab extends Tab {
             data.setAll(ctx.categoryService.getAllCategories());
             refreshParentCombo();
         } catch (SQLException e) {
-            Dialogs.error("خطا در بارگذاری دسته‌بندی‌ها: " + e.getMessage());
+            Dialogs.error(t("category.load.error") + e.getMessage());
         }
     }
 }

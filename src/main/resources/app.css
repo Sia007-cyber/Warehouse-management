@@ -1,0 +1,18 @@
+/*
+ * استایل کلی برنامه.
+ * فونت Lalezar باید روی سیستم کاربر نصب باشد (به‌صورت سیستمی، نه از طریق پروژه).
+ * اگر روی سیستمی نصب نباشد، JavaFX به‌صورت خودکار fallback به فونت پیش‌فرض می‌زند.
+ */
+.root {
+    -fx-font-family: "Lalezar";
+    -fx-font-size: 14px;
+}
+
+.tab-pane .tab-label {
+    -fx-font-family: "Lalezar";
+    -fx-font-size: 14px;
+}
+
+.table-view, .table-view .column-header .label {
+    -fx-font-family: "Lalezar";
+}
